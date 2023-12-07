@@ -2,12 +2,13 @@
 #include "geometry_msgs/msg/twist.hpp"
 #include <cstdlib>  // For system function
 
-int main(int argc, char * argv []) {
+int main(int argc, char * argv[])
+{
   rclcpp::init(argc, argv);
   auto node = rclcpp::Node::make_shared("simple_node");
 
-  const char* command_on = "blink1-tool --on";
-  const char* command_off = "blink1-tool --off";
+  const char * command_on = "blink1-tool --on";
+  const char * command_off = "blink1-tool --off";
 
   int result = system(command_on);
   if (result != 0) {

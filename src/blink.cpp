@@ -3,12 +3,13 @@
 #include "rclcpp/rclcpp.hpp"
 #include "geometry_msgs/msg/twist.hpp"
 
-int main(int argc, char * argv []) {
+int main(int argc, char * argv[])
+{
   rclcpp::init(argc, argv);
   auto node = rclcpp::Node::make_shared("simple_node");
 
-  const char* command_on = " blink1-tool --rgb=ffdf00  --blink=0 --led=1";
-  const char* command_off = "blink1-tool --off";
+  const char * command_on = " blink1-tool --rgb=ffdf00  --blink=0 --led=1";
+  const char * command_off = "blink1-tool --off";
 
   int result = system(command_on);
   if (result != 0) {
