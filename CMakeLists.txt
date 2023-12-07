@@ -1,6 +1,11 @@
 cmake_minimum_required(VERSION 3.8)
 project(blink1_ros2)
 
+# Default to C++17
+if(NOT CMAKE_CXX_STANDARD)
+  set(CMAKE_CXX_STANDARD 17)
+endif()
+
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
@@ -20,8 +25,18 @@ set(dependencies
 add_executable(simple src/simple.cpp)
 ament_target_dependencies(simple ${dependencies})
 
+add_executable(blink src/blink.cpp)
+ament_target_dependencies(blink ${dependencies})
+
 install(TARGETS
   simple
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION lib/${PROJECT_NAME}
+)
+
+install(TARGETS
+  blink
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION lib/${PROJECT_NAME}
