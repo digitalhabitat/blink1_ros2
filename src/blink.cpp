@@ -21,56 +21,49 @@
 
 using std::placeholders::_1;
 
-class blink1InterfaceNode : public rclcpp::Node
+class blink1_node : public rclcpp::Node
 {
 public:
-  blink1InterfaceNode()
-  : Node("blink1_interface_node")
+  blink1_node()
+  : Node("blink1_node")
   {
     subscription_ = this->create_subscription<std_msgs::msg::String>
-    ("string_topic", 10, std::bind(&blink1InterfaceNode::callback, this, _1));
-  }
-
-  void launchTinyServer()
-  {
-    std::string filepath = "/workspaces/bot2_ros2_workspace/src2/blink1-tool/blink1-tiny-server";
-    std::string filename = "blink1-tiny-server";
-    
-    pid_t pid = fork();
-
-    if (pid == -1)
-    {
-      std::perror("Error forking process");
-      std::exit(EXIT_FAILURE);
-    }
-    else if (pid == 0)
-    {
-      // Child process
-      execlp(filepath.c_str(), filename.c_str(), "--port", "8123", "-no-html", nullptr);
-      // If execlp fails
-      std::perror("Error executing child process");
-      std::string errmsg = "Executing child process: " + filename + "failed. Shutting"; 
-      std::exit(EXIT_FAILURE);
-      RCLCPP_ERROR(get_logger(), "Operation failed. Shutting down.");
-      rclcpp::shutdown();  // Terminate the node
-    }
+    ("string_topic", 10, std::bind(&blink1_node::callback, this, _1));
+    on_shutdown(std::bind(&blink1_node::ShutdownCallback, this));
+    curl_wrap("fadeToRGB?rgb=000000&ledn=0");
+    curl_wrap("pattern/play?pattern=0,ffbf00,0.4,2,000000,0.4,2");
   }
 
 private:
+  void curl_wrap(const std::string & str) const
+  {
+    // TODO: use C++ Requests: Curl for People (cpr) instead of system call
+    std::string uri = "curl \"localhost:8123/blink1/" + str +"\"";
+    RCLCPP_INFO(this->get_logger(), uri.c_str());
+    std::system(uri.c_str());
+  }
+
+  void ShutdownCallback() const
+  {
+     curl_wrap("blink?rgb=FF00FF");
+  }
+
   void callback(const std_msgs::msg::String & cmd) const
   {
     RCLCPP_INFO(this->get_logger(), "I heard: '%s'",cmd.data.c_str());
-    std::string uri = "curl localhost:8123/blink1/" + cmd.data;
-    std::system(uri.c_str());
+    curl_wrap(cmd.data);
+    
   }
+
   rclcpp::Subscription<std_msgs::msg::String>::SharedPtr subscription_;
+
+  bool serverOn_;
 };
 
 int main(int argc, char * argv[])
 {
   rclcpp::init(argc, argv);
-  auto node = std::make_shared<blink1InterfaceNode>();
-  node->launchTinyServer();
+  auto node = std::make_shared<blink1_node>();
  
   rclcpp::spin(node);
 
