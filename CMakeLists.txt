@@ -16,6 +16,12 @@ find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 
+# cpr dependencies
+include(FetchContent)
+FetchContent_Declare(cpr GIT_REPOSITORY https://github.com/libcpr/cpr.git
+                         GIT_TAG 3020c34ae2b732121f37433e61599c34535e68a8) # The commit hash for 1.10.x. Replace with the latest from: https://github.com/libcpr/cpr/releases
+FetchContent_MakeAvailable(cpr)
+
 set(dependencies
   rclcpp
   std_msgs
@@ -27,6 +33,8 @@ ament_target_dependencies(simple ${dependencies})
 
 add_executable(blink src/blink.cpp)
 ament_target_dependencies(blink ${dependencies})
+
+target_link_libraries(blink cpr)
 
 install(TARGETS
   simple
@@ -41,6 +49,9 @@ install(TARGETS
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION lib/${PROJECT_NAME}
 )
+
+# project launch files 
+install(DIRECTORY launch DESTINATION share/${PROJECT_NAME}/)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)

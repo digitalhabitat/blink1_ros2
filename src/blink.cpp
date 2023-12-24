@@ -19,6 +19,8 @@
 #include "geometry_msgs/msg/twist.hpp"
 #include "std_msgs/msg/string.hpp"
 
+#include <cpr/cpr.h> // https://github.com/libcpr/cpr
+
 using std::placeholders::_1;
 
 class blink1_node : public rclcpp::Node
@@ -30,34 +32,45 @@ public:
     subscription_ = this->create_subscription<std_msgs::msg::String>
     ("string_topic", 10, std::bind(&blink1_node::callback, this, _1));
     on_shutdown(std::bind(&blink1_node::ShutdownCallback, this));
-    curl_wrap("fadeToRGB?rgb=000000&ledn=0");
-    curl_wrap("pattern/play?pattern=0,ffbf00,0.4,2,000000,0.4,2");
+    cpr_wrap("fadeToRGB?rgb=000000&ledn=0");
+    cpr_wrap("pattern/play?pattern=0,ffbf00,0.4,2,000000,0.4,2");
   }
 
 private:
   void curl_wrap(const std::string & str) const
   {
     // TODO: use C++ Requests: Curl for People (cpr) instead of system call
-    std::string uri = "curl \"localhost:8123/blink1/" + str +"\"";
-    RCLCPP_INFO(this->get_logger(), uri.c_str());
-    std::system(uri.c_str());
+    std::string cmd = "curl \"localhost:8123/blink1/" + str +"\"";
+    RCLCPP_INFO(this->get_logger(), cmd.c_str());
+    std::system(cmd.c_str());
+  }
+
+  cpr::Response cpr_wrap(const std::string & str) const
+  {
+    std::string msg =  "calling cpr_wrap with: " + str;
+    RCLCPP_INFO(this->get_logger(), msg.c_str());
+    std::string uri = pre_uri_ + str;
+    cpr::Response r = cpr::Get(cpr::Url{uri});
+    std::cout<< "blink1_node::status: " << r.status_code << std::endl;
+    return r;
   }
 
   void ShutdownCallback() const
   {
-     curl_wrap("blink?rgb=FF00FF");
+    cpr_wrap("blink?rgb=FF00FF");
   }
 
   void callback(const std_msgs::msg::String & cmd) const
   {
     RCLCPP_INFO(this->get_logger(), "I heard: '%s'",cmd.data.c_str());
-    curl_wrap(cmd.data);
+    cpr_wrap(cmd.data);
     
   }
 
   rclcpp::Subscription<std_msgs::msg::String>::SharedPtr subscription_;
 
   bool serverOn_;
+  std::string pre_uri_ = "localhost:8123/blink1/";
 };
 
 int main(int argc, char * argv[])
